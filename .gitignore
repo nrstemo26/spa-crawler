@@ -1,1 +1,4 @@
 node_modules
+# **/spa-crawler/dist/**/*.js
+# **/spa-crawler/dist/**/*.map
+/dist
