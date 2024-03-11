@@ -13,6 +13,26 @@ let sitemaps = [
     'https://liftoracle.com/sitemap-meets-1.xml',
 ]
 
+//https://liftoracle.com/sitemap.xml
+// 
+async function crawlAthletePage(url:string){
+    console.log('crawling specific athlete')
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    await page.setViewport({width:1500, height:1000})
+    await page.goto(url, {
+        waitUntil: 'networkidle0'
+    })
+
+    await page.screenshot({fullPage: false, path:'athletepage.png'})
+    //get the whole html
+    //use the selector html
+    //selector = 'html'
+    //get all of the html 
+    //then what do i do with it??
+    await browser.close();
+}
+
 async function run(): Promise<void>{
     console.log('running sitmap crawler');
     let url:string = 'https://liftoracle.com/sitemap-athletes-1.xml';
@@ -41,7 +61,16 @@ async function run(): Promise<void>{
     })
     console.log(siteMapAthletes)
     console.log(siteMapAthletes.length)
+
+    crawlAthletePage(siteMapAthletes[2])
+    // so take sitemapathletes and then go thru each athletes page
+    // what do i do when on the page??
+    // 
+    await browser.close()
 }
+
+
+
 
 // async function getAthletesOnPage(athletesOnPage, page , filePath){
 //     let allAthleteData =[];
