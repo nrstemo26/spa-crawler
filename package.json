@@ -1,0 +1,33 @@
+{
+  "name": "spa-crawler",
+  "version": "1.0.0",
+  "description": "single page application crawler for seo optimization",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "run": "node dist/index.js",
+    "build:watch": "tsc --watch",
+    "run:watch": "nodemon dist/index.js --watch dist",
+    "start": "npm-run-all --parallel build:watch run:watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "spa-crawler"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "puppeteer": "^22.4.1",
+    "selenium-webdriver": "^4.18.1"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.11.25",
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.0",
+    "npm-run-all": "^4.1.5",
+    "ts-jest": "^29.1.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.2"
+  }
+}
