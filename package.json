@@ -5,9 +5,9 @@
   "main": "./dist/index.js",
   "scripts": {
     "build": "tsc",
-    "run": "node dist/index.js",
+    "run": "node ./dist/index.js",
     "build:watch": "tsc --watch",
-    "run:watch": "nodemon dist/index.js --watch dist",
+    "run:watch": "nodemon ./dist/index.js --watch dist",
     "start": "npm-run-all --parallel build:watch run:watch"
   },
   "repository": {
