@@ -1,22 +1,57 @@
 const puppeteer = require('puppeteer')
-
-//what are the steps I need to do
-// open browser
-// go to web pages i need
-// take the html and put it somewhere
-//
+let fs = require('fs');
 
 let sitemaps = [
-    'https://liftoracle.com/sitemap-static.xml',
-    'https://liftoracle.com/sitemap-athletes-1.xml',
-    'https://liftoracle.com/sitemap-athletes-2.xml',
-    'https://liftoracle.com/sitemap-meets-1.xml',
+    {
+        path: './sitemap_data/athlete/',
+        url:'https://liftoracle.com/sitemap-athletes-1.xml',
+    },
+    {
+        path: './sitemap_data/athlete/',
+        url:'https://liftoracle.com/sitemap-athletes-2.xml',
+    },
+    {
+        path: './sitemap_data/static/',
+        url:'https://liftoracle.com/sitemap-static.xml',
+    },
+    {
+        path: './sitemap_data/meet/',
+        url:'https://liftoracle.com/sitemap-meets-1.xml',
+    },
 ]
 
-//https://liftoracle.com/sitemap.xml
-// 
+//https://liftoracle.com/sitemap.xml 
 async function crawlAthletePage(url:string){
-    console.log('crawling specific athlete')
+    try{
+        console.log('crawling specific athlete')
+        const browser = await puppeteer.launch();
+        const page = await browser.newPage();
+        await page.setViewport({width:1500, height:1000})
+        await page.goto(url, {
+            waitUntil: 'networkidle0'
+        })
+    
+        await page.screenshot({fullPage: false, path:'athletepage.png'})
+           
+        const htmlContent = await page.evaluate(()=>{
+            return document.documentElement.outerHTML;
+        })
+    
+        writeHtml(htmlContent, url)
+        await browser.close();
+        fs.appendFileSync('./sitemap_data/athlete/success.log', url + '\n');
+        
+    }catch(e){
+        fs.appendFileSync('./sitemap_data/athlete/error.log', url + '\n');
+    }
+    
+    
+}
+
+async function getSitemapPages():Promise<string[]>{
+    console.log('running sitmap crawler');
+    let url:string = 'https://liftoracle.com/sitemap.xml';
+
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
     await page.setViewport({width:1500, height:1000})
@@ -24,17 +59,25 @@ async function crawlAthletePage(url:string){
         waitUntil: 'networkidle0'
     })
 
-    await page.screenshot({fullPage: false, path:'athletepage.png'})
-    //get the whole html
-    //use the selector html
-    //selector = 'html'
-    //get all of the html 
-    //then what do i do with it??
-    await browser.close();
+    let siteMapPages = await page.evaluate(()=>{
+        let selector = "sitemap loc"
+        let elArr: any = Array.from(document.querySelectorAll(`${selector}`))
+        elArr = elArr.map((x:any)=>{
+            let el = x.textContent
+            return el;
+        })
+        return elArr
+    })
+     
+    await browser.close()
+    return siteMapPages;
 }
+
+
 
 async function run(): Promise<void>{
     console.log('running sitmap crawler');
+    let path: string = './sitemap_data/athlete/'
     let url:string = 'https://liftoracle.com/sitemap-athletes-1.xml';
     //go to url and then pop off
 
@@ -59,10 +102,16 @@ async function run(): Promise<void>{
         })
         return elArr
     })
-    console.log(siteMapAthletes)
-    console.log(siteMapAthletes.length)
+    // console.log(siteMapAthletes)
+    // console.log(siteMapAthletes.length)
 
-    crawlAthletePage(siteMapAthletes[2])
+    for(let i = 0; i < siteMapAthletes.length; i++){
+        await crawlAthletePage(siteMapAthletes[i])
+    }
+    // siteMapAthletes.forEach((item:string ,i) => {
+    //     crawlAthletePage(item);
+    // })
+    // crawlAthletePage(siteMapAthletes[2])
     // so take sitemapathletes and then go thru each athletes page
     // what do i do when on the page??
     // 
@@ -70,92 +119,33 @@ async function run(): Promise<void>{
 }
 
 
+function writeHtml(htmlData:string, url:string){
+    let name = url.split('athlete/')[1].replace(/['"]/g, '')
+    let formattedName = name.replace(/\s+/g, '_')
+    let fileName = './sitemap_data/athlete/' + formattedName + '.html';
 
-
-// async function getAthletesOnPage(athletesOnPage, page , filePath){
-//     let allAthleteData =[];
-//     for(let i = 1; i <= athletesOnPage; i++){
-//         let athleteData = await page.evaluate((index)=>{
-//             let selector = ".data-table div div.v-data-table div.v-data-table__wrapper table tbody tr:nth-of-type("+ index +") td > div"
-//             let elArr = Array.from(document.querySelectorAll(`${selector}`))
-//             elArr = elArr.map((x)=>{
-//                 let el = x.textContent.replace('|', ',')
-//                 return  el.trim()
-//             })
-//             return elArr
-//         },i)
-//         // athleteData = athleteData.map(x=> x.replace(',',' ').trim())
-
-//         allAthleteData.push(athleteData)
-//     }
-
-//     let weightliftingCSV = createCSVfromArray(allAthleteData);
-//     writeCSV(filePath, weightliftingCSV)    
-// }
-
-
-// async function getCurrentYearMetadata(filePath: string) {
-//     console.log('running current year metadata scraper')
-//     let url = 'https://usaweightlifting.sport80.com/public/rankings/results/'
+    const stream = fs.createWriteStream(fileName);
     
-//     const browser = await puppeteer.launch();
-//     const page = await browser.newPage();
-//     await page.setViewport({width:1500, height:1000})
-//     await page.goto(url, {
-//         waitUntil: 'networkidle0'
-//     })
+    stream.once('open', ()=>{
+        stream.end(htmlData);
+    })
+}
 
-//     async function getMoreResultsOnPage(){
-//         await page.waitForNetworkIdle()
-//         await page.click('div.v-select__slot div.v-input__append-inner div.v-input__icon')
-//         await page.waitForNetworkIdle()
-//         await page.waitForSelector('div.v-menu__content')
-//         await page.waitForNetworkIdle()
-//         await page.click('div.v-menu__content div.v-list.v-select-list.v-sheet div.v-list-item.v-list-item--link:nth-of-type(6)')
-//         await page.waitForNetworkIdle()
-//         console.log('got more results on page')
-//     }
 
-//     async function getPageData(){
-//         return await page.$eval(
-//             ".data-table div div.v-data-table div.v-data-footer div.v-data-footer__pagination",
-//             x =>  x.textContent
-//         )
-//     }
-       
-//     //takes pagination from 30/page to 50/page
-//     await getMoreResultsOnPage()
-    
-// //    await page.screenshot({ path: 'date.png', fullPage: true })
-   
-//    //waits for the data to actually load before we get all of the meet data
-//    await page.waitForNetworkIdle()
-//    await page.waitForNetworkIdle()
-   
-//     // await page.screenshot({ path: 'page.png', fullPage: true })
-//     await getTableWriteCsv(filePath, page)
 
-//     console.log('starting scraping')
-    
-//     await getMeetsOnPage(getAmountMeetsOnPage(await getPageData()), page, filePath);
-//     console.log(await getPageData())
+// run();
 
-//     while(await handleTotalAthleteString(await getPageData())){
-//         console.log('getting meet metadata...')
-//         await Promise.all([
-//             page.waitForNetworkIdle(),
-//             page.click('.data-table div div.v-data-table div.v-data-footer div.v-data-footer__icons-after'),
-//         ]);
-//         console.log(await getPageData())
-        
-//         await getMeetsOnPage(getAmountMeetsOnPage(await getPageData()), page, filePath)
-//     }
+// crawlAthletePage('https://liftoracle.com/athlete/Abigail%20Cooper');
+run()
 
-//     console.log('getting resourses...')
-//     console.log(await getPageData())
-//     console.log('done scraping')
+//
+// so what do I need to do?
+// I need to loop thru each athlete in the sitemap
+// get all of the sitemap athletes
+// loop thru all of the athletes
+// crawl the athlete page and write
+// error handling and write to a 
+// get the url of that athlete
 
-//     await browser.close();
-// }
 
-run();
+//what do i need to do now
