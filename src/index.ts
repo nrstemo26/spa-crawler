@@ -1,7 +1,5 @@
 const puppeteer = require('puppeteer')
 let fs = require('fs');
-const asyncFs = require('fs').promises;
-
 
 let sitemaps = [
     {
@@ -86,14 +84,15 @@ async function scrapeAthletes(){
     const allSitemapAthletes = [...siteMapAthletes1,...siteMapAthletes2];
     
     //  console.log(allSitemapAthletes)
-     console.log(`found ${allSitemapAthletes.length} athletes in the sitemap`)
+    console.log(`found ${allSitemapAthletes.length} athletes in the sitemap`)
+    await browser.close()
 
     for(let i = 0; i < 4; i++){
     // for(let i = 0; i < siteMapAthletes.length; i++){
         await crawlAthletePage(allSitemapAthletes[i])
     }
-   
-    await browser.close()
+    console.log('crawled all athlete pages');
+    
 }
 
 
