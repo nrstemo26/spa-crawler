@@ -1,5 +1,7 @@
 const puppeteer = require('puppeteer')
 let fs = require('fs');
+const asyncFs = require('fs').promises;
+
 
 let sitemaps = [
     {
@@ -20,8 +22,95 @@ let sitemaps = [
     },
 ]
 
+
+async function scrapeStatic(){
+    let data = {
+        path: './sitemap_data/static/',
+        url:'https://liftoracle.com/sitemap-static.xml',
+    }
+
+    console.log('scraping static page')
+}
+
+async function scrapeMeets(){
+    let data = {
+        path: './sitemap_data/meet/',
+        url:'https://liftoracle.com/sitemap-meets-1.xml',
+    }
+
+    console.log('scraping meets')
+}
+
+async function scrapeAthletes(){
+    let data = {
+        path: './sitemap_data/athlete/',
+        urls:[
+            'https://liftoracle.com/sitemap-athletes-1.xml',
+            'https://liftoracle.com/sitemap-athletes-2.xml',
+        ]
+    }
+
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    await page.setViewport({width:1500, height:1000})
+    await page.goto(data.urls[0], {
+        waitUntil: 'networkidle0'
+    })
+    const page2 = await browser.newPage()
+    await page2.setViewport({width:1500, height:1000})
+    await page2.goto(data.urls[1], {
+        waitUntil: 'networkidle0'
+    })
+    
+    await page.screenshot({fullPage: false, path:'page.png'})
+
+    let siteMapAthletes1 = await page.evaluate(()=>{
+        let selector = "url loc"
+        let elArr: any = Array.from(document.querySelectorAll(`${selector}`))
+        elArr = elArr.map((x:any)=>{
+            let el = x.textContent
+            return el;
+        })
+        return elArr
+    })
+    let siteMapAthletes2 = await page2.evaluate(()=>{
+        let selector = "url loc"
+        let elArr: any = Array.from(document.querySelectorAll(`${selector}`))
+        elArr = elArr.map((x:any)=>{
+            let el = x.textContent
+            return el;
+        })
+        return elArr
+    })
+
+    const allSitemapAthletes = [...siteMapAthletes1,...siteMapAthletes2];
+    
+    //  console.log(allSitemapAthletes)
+     console.log(`found ${allSitemapAthletes.length} athletes in the sitemap`)
+
+    for(let i = 0; i < 4; i++){
+    // for(let i = 0; i < siteMapAthletes.length; i++){
+        await crawlAthletePage(allSitemapAthletes[i])
+    }
+   
+    await browser.close()
+}
+
+
+
 //https://liftoracle.com/sitemap.xml 
 async function crawlAthletePage(url:string){
+    let name = url.split('athlete/')[1].replace(/['"]/g, '')
+    let formattedName = name.replace(/\s+/g, '_')
+    let fileName = './sitemap_data/athlete/' + formattedName + '.html';
+
+    function writeHtml(htmlData:string, fileName:string){
+        const stream = fs.createWriteStream(fileName);
+        stream.once('open', ()=>{
+            stream.end(htmlData);
+        })
+    }
+
     try{
         console.log('crawling specific athlete')
         const browser = await puppeteer.launch();
@@ -31,21 +120,20 @@ async function crawlAthletePage(url:string){
             waitUntil: 'networkidle0'
         })
     
-        await page.screenshot({fullPage: false, path:'athletepage.png'})
+        // await page.screenshot({fullPage: false, path:'athletepage.png'})
            
         const htmlContent = await page.evaluate(()=>{
             return document.documentElement.outerHTML;
         })
     
-        writeHtml(htmlContent, url)
+        writeHtml(htmlContent, fileName)
         await browser.close();
-        fs.appendFileSync('./sitemap_data/athlete/success.log', url + '\n');
+        
+        fs.appendFileSync('./sitemap_data/athlete/success.csv', fileName + '|' + url + '\n');
         
     }catch(e){
-        fs.appendFileSync('./sitemap_data/athlete/error.log', url + '\n');
+        fs.appendFileSync('./sitemap_data/athlete/error.csv', fileName + '|' + url + '\n');
     }
-    
-    
 }
 
 async function getSitemapPages():Promise<string[]>{
@@ -77,45 +165,12 @@ async function getSitemapPages():Promise<string[]>{
 
 async function run(): Promise<void>{
     console.log('running sitmap crawler');
-    let path: string = './sitemap_data/athlete/'
-    let url:string = 'https://liftoracle.com/sitemap-athletes-1.xml';
-    //go to url and then pop off
 
-    const browser = await puppeteer.launch();
-    const page = await browser.newPage();
-    await page.setViewport({width:1500, height:1000})
-    await page.goto(url, {
-        waitUntil: 'networkidle0'
-    })
-
-    await page.screenshot({fullPage: false, path:'page.png'})
-    //selectors for each athlete
-    //<url> <loc> url</loc> </url>
-    //selector all
-
-    let siteMapAthletes = await page.evaluate(()=>{
-        let selector = "url loc"
-        let elArr: any = Array.from(document.querySelectorAll(`${selector}`))
-        elArr = elArr.map((x:any)=>{
-            let el = x.textContent
-            return el;
-        })
-        return elArr
-    })
-    // console.log(siteMapAthletes)
-    // console.log(siteMapAthletes.length)
-
-    for(let i = 0; i < siteMapAthletes.length; i++){
-        await crawlAthletePage(siteMapAthletes[i])
-    }
-    // siteMapAthletes.forEach((item:string ,i) => {
-    //     crawlAthletePage(item);
-    // })
-    // crawlAthletePage(siteMapAthletes[2])
-    // so take sitemapathletes and then go thru each athletes page
-    // what do i do when on the page??
-    // 
-    await browser.close()
+    await scrapeAthletes();
+    await scrapeMeets();
+    await scrapeStatic();
+    
+    
 }
 
 
@@ -133,19 +188,12 @@ function writeHtml(htmlData:string, url:string){
 
 
 
-// run();
+//scrape meets
+//scrape athletes off of 2 pages
+//scrape static
 
-// crawlAthletePage('https://liftoracle.com/athlete/Abigail%20Cooper');
 run()
 
-//
-// so what do I need to do?
-// I need to loop thru each athlete in the sitemap
-// get all of the sitemap athletes
-// loop thru all of the athletes
-// crawl the athlete page and write
-// error handling and write to a 
-// get the url of that athlete
-
-
-//what do i need to do now
+// what i need
+// loop thru all of the sitemap files
+// make the right path to write the files
