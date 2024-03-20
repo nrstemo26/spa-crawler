@@ -45,23 +45,7 @@ async function createFileStructure(folderName:string ){
     await fsPromise.writeFile(path + '/log/error.csv', 'path| url\n');
 }
 
-async function checkAndCreateFile(filePath:string, content:string) {
-    console.log(filePath)
-    try {
-        // Check if file exists
-        console.log('1')
-        await fsPromise.access(filePath, fs.constants.F_OK);
-        // File exists, append content
-        console.log('2')
-        await fsPromise.appendFile(filePath, content);
-        return `Content appended to file '${filePath}'.`;
-    } catch (err) {
-        // File doesn't exist, create it
-        console.log('3')
-        await fsPromise.writeFile(filePath, content);
-        return `File '${filePath}' created with content.`;
-    }
-}
+
 
 
 
@@ -77,8 +61,7 @@ async function scrapeMeets(){
     waitUntil: 'networkidle0'
     })
 
-    await page.screenshot({fullPage: false, path:'meetpage.png'})
-
+    
     let siteMapMeets = await page.evaluate(()=>{
     let selector = "url loc"
     let elArr: any = Array.from(document.querySelectorAll(`${selector}`))
@@ -92,7 +75,6 @@ async function scrapeMeets(){
     console.log(`found ${siteMapMeets.length} meets in the sitemap`)
     await browser.close()
 
-    ///makes folder structure if it doesn't exist
     await createFileStructure('meet')
 
     for(let i = 0; i < 4; i++){
@@ -109,7 +91,8 @@ async function crawlMeetPage(url:string){
     let fileName = './sitemap_data/meet/' + formattedName + '.html';
 
     try{
-        console.log('crawling meet page: ' + url)
+
+        // console.log('crawling meet page: ' + url)
         const browser = await puppeteer.launch();
         const page = await browser.newPage();
         await page.setViewport({width:1500, height:1000})
@@ -149,8 +132,7 @@ async function scrapeAthletes(){
         waitUntil: 'networkidle0'
     })
     
-    await page.screenshot({fullPage: false, path:'page.png'})
-
+    
     let siteMapAthletes1 = await page.evaluate(()=>{
         let selector = "url loc"
         let elArr: any = Array.from(document.querySelectorAll(`${selector}`))
@@ -172,7 +154,6 @@ async function scrapeAthletes(){
 
     const allSitemapAthletes = [...siteMapAthletes1,...siteMapAthletes2];
     
-    //  console.log(allSitemapAthletes)
     console.log(`found ${allSitemapAthletes.length} athletes in the sitemap`)
     await browser.close()
 
@@ -199,7 +180,7 @@ async function scrapeStatic(){
         waitUntil: 'networkidle0'
     })
 
-    await page.screenshot({fullPage: false, path:'static.png'})
+
     let staticPages = await page.evaluate(()=>{
         let selector = "url loc"
         let elArr: any = Array.from(document.querySelectorAll(`${selector}`))
@@ -212,6 +193,9 @@ async function scrapeStatic(){
 
     await browser.close();
 
+    //make file structure
+    createFileStructure('static')
+
     //loop thru static pages and crawl each page
     for(let i = 0; i< staticPages.length; i++){
         await crawlStaticPage(staticPages[i]);
@@ -222,7 +206,6 @@ async function scrapeStatic(){
 }
 
 async function crawlStaticPage(url:string){
-    console.log(url)
     let name = url.split('.com/')[1].replace(/['"]/g, '')
     if(name.length == 0) name = 'home';
 
@@ -236,7 +219,7 @@ async function crawlStaticPage(url:string){
     }
 
     try{
-        console.log('crawling static page: ' + url)
+        // console.log('crawling static page: ' + url)
         const browser = await puppeteer.launch();
         const page = await browser.newPage();
         await page.setViewport({width:1500, height:1000})
@@ -244,8 +227,7 @@ async function crawlStaticPage(url:string){
             waitUntil: 'networkidle0'
         })
     
-        // await page.screenshot({fullPage: false, path:'athletepage.png'})
-           
+      
         const htmlContent = await page.evaluate(()=>{
             return document.documentElement.outerHTML;
         })
@@ -270,7 +252,7 @@ async function crawlAthletePage(url:string){
 
 
     try{
-        console.log('crawling athlete: ' + url)
+        // console.log('crawling athlete: ' + url)
         const browser = await puppeteer.launch();
         const page = await browser.newPage();
         await page.setViewport({width:1500, height:1000})
@@ -324,11 +306,10 @@ async function run(): Promise<void>{
 
     await scrapeAthletes();
     await scrapeMeets();
-    // await scrapeStatic();
+    await scrapeStatic();
     
-    
+    console.log('finished crawl')
 }
-
 
 // function writeHtml(htmlData:string, url:string){
 //     let name = url.split('athlete/')[1].replace(/['"]/g, '')
@@ -343,13 +324,4 @@ async function run(): Promise<void>{
 // }
 
 
-
-//scrape meets
-//scrape athletes off of 2 pages
-//scrape static
-
 run()
-
-// what i need
-// loop thru all of the sitemap files
-// make the right path to write the files
