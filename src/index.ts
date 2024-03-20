@@ -305,6 +305,6 @@ async function run(): Promise<void>{
 }
 
 
-
 //just need to uncomment run and it should make the folder in the same directory
-run()
+//then commandline: npm run start
+// run()
