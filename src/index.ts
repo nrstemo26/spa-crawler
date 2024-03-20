@@ -1,5 +1,3 @@
-import { create } from "domain";
-
 const puppeteer = require('puppeteer')
 let fs = require('fs');
 let fsPromise = require('fs').promises;
