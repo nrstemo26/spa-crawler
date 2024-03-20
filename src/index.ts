@@ -1,5 +1,8 @@
+import { create } from "domain";
+
 const puppeteer = require('puppeteer')
 let fs = require('fs');
+let fsPromise = require('fs').promises;
 
 //https://liftoracle.com/sitemap.xml 
 // let sitemaps = [
@@ -33,7 +36,32 @@ function writeHtml(htmlData:string, fileName:string){
     })
 }
 
+async function createFileStructure(folderName:string ){
+    let path = './sitemap_data/' + folderName;
+    
+    await fsPromise.mkdir(path, {recursive:true});
+    await fsPromise.mkdir(path +'/log', {recursive: true});
+    await fsPromise.writeFile(path + '/log/success.csv', 'path| url\n');
+    await fsPromise.writeFile(path + '/log/error.csv', 'path| url\n');
+}
 
+async function checkAndCreateFile(filePath:string, content:string) {
+    console.log(filePath)
+    try {
+        // Check if file exists
+        console.log('1')
+        await fsPromise.access(filePath, fs.constants.F_OK);
+        // File exists, append content
+        console.log('2')
+        await fsPromise.appendFile(filePath, content);
+        return `Content appended to file '${filePath}'.`;
+    } catch (err) {
+        // File doesn't exist, create it
+        console.log('3')
+        await fsPromise.writeFile(filePath, content);
+        return `File '${filePath}' created with content.`;
+    }
+}
 
 
 
@@ -64,6 +92,9 @@ async function scrapeMeets(){
     console.log(`found ${siteMapMeets.length} meets in the sitemap`)
     await browser.close()
 
+    ///makes folder structure if it doesn't exist
+    await createFileStructure('meet')
+
     for(let i = 0; i < 4; i++){
     // for(let i = 0; i < siteMapMeets.length; i++){
         await crawlMeetPage(siteMapMeets[i])
@@ -93,11 +124,7 @@ async function crawlMeetPage(url:string){
         writeHtml(htmlContent, fileName)
         await browser.close();
         
-        //if log file exists
         fs.appendFileSync('./sitemap_data/meet/log/success.csv', fileName + '|' + url + '\n');
-        //else make the log file
-        //same thing for the catch
-
     }catch(e){
         fs.appendFileSync('./sitemap_data/meet/log/error.csv', fileName + '|' + url + '\n');
     }
@@ -149,6 +176,9 @@ async function scrapeAthletes(){
     console.log(`found ${allSitemapAthletes.length} athletes in the sitemap`)
     await browser.close()
 
+
+    createFileStructure('athlete')
+
     for(let i = 0; i < 4; i++){
     // for(let i = 0; i < siteMapAthletes.length; i++){
         await crawlAthletePage(allSitemapAthletes[i])
@@ -168,7 +198,7 @@ async function scrapeStatic(){
     await page.goto(url, {
         waitUntil: 'networkidle0'
     })
-    // console.log('got here')
+
     await page.screenshot({fullPage: false, path:'static.png'})
     let staticPages = await page.evaluate(()=>{
         let selector = "url loc"
@@ -292,7 +322,7 @@ async function getSitemapPages():Promise<string[]>{
 async function run(): Promise<void>{
     console.log('running sitmap crawler');
 
-    // await scrapeAthletes();
+    await scrapeAthletes();
     await scrapeMeets();
     // await scrapeStatic();
     
