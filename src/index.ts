@@ -158,7 +158,7 @@ async function scrapeAthletes(){
     await browser.close()
 
 
-    createFileStructure('athlete')
+    await createFileStructure('athlete')
 
     for(let i = 0; i < 4; i++){
     // for(let i = 0; i < siteMapAthletes.length; i++){
@@ -194,7 +194,7 @@ async function scrapeStatic(){
     await browser.close();
 
     //make file structure
-    createFileStructure('static')
+    await createFileStructure('static')
 
     //loop thru static pages and crawl each page
     for(let i = 0; i< staticPages.length; i++){
@@ -202,7 +202,6 @@ async function scrapeStatic(){
     }
 
     console.log('crawled all static pages')
-
 }
 
 async function crawlStaticPage(url:string){
@@ -274,6 +273,7 @@ async function crawlAthletePage(url:string){
     }
 }
 
+//utility function from earlier in the scrape
 async function getSitemapPages():Promise<string[]>{
     console.log('running sitmap crawler');
     let url:string = 'https://liftoracle.com/sitemap.xml';
@@ -311,17 +311,6 @@ async function run(): Promise<void>{
     console.log('finished crawl')
 }
 
-// function writeHtml(htmlData:string, url:string){
-//     let name = url.split('athlete/')[1].replace(/['"]/g, '')
-//     let formattedName = name.replace(/\s+/g, '_')
-//     let fileName = './sitemap_data/athlete/' + formattedName + '.html';
-
-//     const stream = fs.createWriteStream(fileName);
-    
-//     stream.once('open', ()=>{
-//         stream.end(htmlData);
-//     })
-// }
 
 
 run()
