@@ -36,6 +36,7 @@ function writeHtml(htmlData:string, fileName:string){
     })
 }
 
+
 async function createFileStructure(folderName:string ){
     let path = './sitemap_data/' + folderName;
     
@@ -44,10 +45,6 @@ async function createFileStructure(folderName:string ){
     await fsPromise.writeFile(path + '/log/success.csv', 'path| url\n');
     await fsPromise.writeFile(path + '/log/error.csv', 'path| url\n');
 }
-
-
-
-
 
 async function scrapeMeets(){
     // let path = './sitemap_data/meet/';
@@ -115,6 +112,7 @@ async function crawlMeetPage(url:string){
 
 
 async function scrapeAthletes(){
+    console.log('scraping athletes')
     let urls = [
             'https://liftoracle.com/sitemap-athletes-1.xml',
             'https://liftoracle.com/sitemap-athletes-2.xml'
@@ -165,7 +163,6 @@ async function scrapeAthletes(){
         await crawlAthletePage(allSitemapAthletes[i])
     }
     console.log('crawled all athlete pages');
-
 }
 
 
@@ -179,7 +176,6 @@ async function scrapeStatic(){
     await page.goto(url, {
         waitUntil: 'networkidle0'
     })
-
 
     let staticPages = await page.evaluate(()=>{
         let selector = "url loc"
@@ -304,6 +300,10 @@ async function getSitemapPages():Promise<string[]>{
 async function run(): Promise<void>{
     console.log('running sitmap crawler');
 
+    console.log('making your folder')
+    // console.log('making your folder')
+    await fsPromise.mkdir('./sitemap_data', {recursive:true});
+    
     await scrapeAthletes();
     await scrapeMeets();
     await scrapeStatic();
