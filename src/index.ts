@@ -74,8 +74,7 @@ async function scrapeMeets(){
 
     await createFileStructure('meet')
 
-    for(let i = 0; i < 4; i++){
-    // for(let i = 0; i < siteMapMeets.length; i++){
+    for(let i = 0; i < siteMapMeets.length; i++){
         await crawlMeetPage(siteMapMeets[i])
     }
     console.log('crawled all meet pages');
@@ -88,7 +87,6 @@ async function crawlMeetPage(url:string){
     let fileName = './sitemap_data/meet/' + formattedName + '.html';
 
     try{
-
         // console.log('crawling meet page: ' + url)
         const browser = await puppeteer.launch();
         const page = await browser.newPage();
@@ -158,8 +156,7 @@ async function scrapeAthletes(){
 
     await createFileStructure('athlete')
 
-    for(let i = 0; i < 4; i++){
-    // for(let i = 0; i < siteMapAthletes.length; i++){
+    for(let i = 0; i < allSitemapAthletes.length; i++){
         await crawlAthletePage(allSitemapAthletes[i])
     }
     console.log('crawled all athlete pages');
@@ -301,9 +298,7 @@ async function run(): Promise<void>{
     console.log('running sitmap crawler');
 
     console.log('making your folder')
-    // console.log('making your folder')
     await fsPromise.mkdir('./sitemap_data', {recursive:true});
-    
     await scrapeAthletes();
     await scrapeMeets();
     await scrapeStatic();
@@ -313,4 +308,5 @@ async function run(): Promise<void>{
 
 
 
+//just need to uncomment run and it should make the folder in the same directory
 run()
