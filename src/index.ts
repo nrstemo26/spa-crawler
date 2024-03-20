@@ -102,6 +102,7 @@ async function crawlMeetPage(url:string){
         
         fs.appendFileSync('./sitemap_data/meet/log/success.csv', fileName + '|' + url + '\n');
     }catch(e){
+        console.log('error scraping: ', url)
         fs.appendFileSync('./sitemap_data/meet/log/error.csv', fileName + '|' + url + '\n');
     }
 }
@@ -225,11 +226,10 @@ async function crawlStaticPage(url:string){
         writeHtml(htmlContent, fileName)
         await browser.close();
         
-        //if log file exists
+        
         fs.appendFileSync('./sitemap_data/static/log/success.csv', fileName + '|' + url + '\n');
-        //else make the log file
-
     }catch(e){
+        console.log('error scraping: ', url)
         fs.appendFileSync('./sitemap_data/static/log/error.csv', fileName + '|' + url + '\n');
     }
 }
@@ -260,6 +260,7 @@ async function crawlAthletePage(url:string){
         fs.appendFileSync('./sitemap_data/athlete/log/success.csv', fileName + '|' + url + '\n');
         
     }catch(e){
+        console.log('error scraping: ', url)
         fs.appendFileSync('./sitemap_data/athlete/log/error.csv', fileName + '|' + url + '\n');
     }
 }
@@ -307,4 +308,4 @@ async function run(): Promise<void>{
 
 //just need to uncomment run and it should make the folder in the same directory
 //then commandline: npm run start
-// run()
+run()
